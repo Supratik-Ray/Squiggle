@@ -2,6 +2,7 @@ import { Canvas } from "fabric";
 import { useEffect, useRef } from "react";
 
 import Toolbar from "./components/Toolbar";
+import RoomNavbar from "./components/RoomNavbar";
 
 function App() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -26,11 +27,14 @@ function App() {
   }, []);
 
   return (
-    <div className="h-screen flex">
-      <Toolbar fabricRef={fabricRef} />
-      <main ref={containerRef} className="flex-1 overflow-hidden">
-        <canvas ref={canvasRef} />
-      </main>
+    <div className="flex flex-col h-screen">
+      <RoomNavbar />
+      <div className="flex flex-1">
+        <Toolbar fabricRef={fabricRef} />
+        <main ref={containerRef} className="flex-1 overflow-hidden">
+          <canvas ref={canvasRef} />
+        </main>
+      </div>
     </div>
   );
 }
