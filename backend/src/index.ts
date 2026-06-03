@@ -44,8 +44,98 @@ app.get("/health", (req: Request, res: Response) => {
   });
 });
 
+interface Participant {
+  id: string;
+  name: string;
+  image: string | null;
+  socketId: string;
+}
+
+const socketToRoomMapping: Record<string, string> = {};
+
+//we are storing Participants in a map with socket id key instead of an array as deletion and searching is O(1) in map compared to array
+const rooms = new Map<string, Map<string, Participant>>();
+
+io.use(async (socket, next) => {
+  try {
+    const cookie = socket.handshake.headers.cookie;
+    const session = await auth.api.getSession({
+      headers: new Headers({
+        cookie: cookie ?? "",
+      }),
+    });
+
+    if (!session) {
+      return next(new Error("unauthorized"));
+    }
+
+    socket.data.userId = session.user.id;
+    socket.data.user = session.user;
+    next();
+  } catch (error) {
+    next(new Error("Unauthorized"));
+  }
+});
+
 io.on("connection", (socket) => {
   console.log(`socketID: ${socket.id} connected`);
+
+  socket.on("room:join", ({ roomId }) => {
+    //create room if it doesnt exist
+    if (!rooms.has(roomId)) {
+      rooms.set(roomId, new Map());
+    }
+
+    const room = rooms.get(roomId);
+    //check if user with that socketid exists in the room
+    if (room?.has(socket.id)) {
+      return;
+    }
+
+    const user = socket.data.user;
+    const userPayload = {
+      id: user.id,
+      name: user.name,
+      image: user.image,
+      socketId: socket.id,
+    };
+
+    //add user to the room
+    room?.set(socket.id, userPayload);
+    socket.join(roomId);
+    socketToRoomMapping[socket.id] = roomId;
+    socket.emit("room:joined", {
+      roomId,
+      participants: Array.from(room?.values() ?? []),
+    });
+    socket.to(roomId).emit("user:joined", { user: userPayload });
+  });
+
+  socket.on("disconnect", () => {
+    if (socket.id in socketToRoomMapping) {
+      //remove user from room
+      const roomId = socketToRoomMapping[socket.id];
+      if (roomId) {
+        const room = rooms.get(roomId);
+        room?.delete(socket.id);
+
+        //delete the room if no user in the room
+        if (room?.size === 0) {
+          rooms.delete(roomId);
+        }
+      }
+      //remove user from socket-to-room mapping
+      delete socketToRoomMapping[socket.id];
+      const user = socket.data.user;
+      const userPayload = {
+        id: user.id,
+        name: user.name,
+        image: user.image,
+        socketId: socket.id,
+      };
+      socket.to(roomId!).emit("user:left", { user: userPayload });
+    }
+  });
 });
 
 const port = process.env.PORT || 5000;
