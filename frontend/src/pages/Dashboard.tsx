@@ -9,7 +9,7 @@ import toast from "react-hot-toast";
 interface Board {
   _id: string;
   name: string;
-  roomCode: string;
+  roomId: string;
   createdAt: string;
 }
 
@@ -25,7 +25,7 @@ function Dashboard() {
     try {
       setLoading(true);
 
-      const response = await fetch("http://localhost:5000/api/boards", {
+      const response = await fetch("http://localhost:8000/api/boards", {
         credentials: "include",
       });
 
@@ -96,7 +96,7 @@ function Dashboard() {
                   </h3>
 
                   <p className="text-sm text-slate-500 mt-2">
-                    Room Code: {board.roomCode}
+                    Room Code: {board.roomId}
                   </p>
 
                   <p className="text-xs text-slate-400 mt-4">

@@ -11,7 +11,10 @@ type CreateBoardModalProps = {
 function CreateBoardModal({ open, onCloseModal }: CreateBoardModalProps) {
   const [boardName, setBoardName] = useState("");
 
-  const handleCreateDrawingBoard = async () => {
+  const handleCreateDrawingBoard = async (
+    e: React.SubmitEvent<HTMLFormElement>,
+  ) => {
+    e.preventDefault();
     const roomCode = generateRoomCode();
 
     const response = await fetch("http://localhost:8000/api/boards", {
@@ -21,8 +24,8 @@ function CreateBoardModal({ open, onCloseModal }: CreateBoardModalProps) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        boardName,
-        roomCode,
+        name: boardName,
+        roomId: roomCode,
       }),
     });
 
@@ -54,7 +57,7 @@ function CreateBoardModal({ open, onCloseModal }: CreateBoardModalProps) {
           </p>
         </div>
 
-        <form className="space-y-5">
+        <form className="space-y-5" onSubmit={handleCreateDrawingBoard}>
           <div>
             <label
               htmlFor="boardName"
@@ -88,7 +91,6 @@ function CreateBoardModal({ open, onCloseModal }: CreateBoardModalProps) {
           <div className="flex justify-end gap-3 pt-2">
             <button
               type="button"
-              onClick={onCloseModal}
               className="
             px-5
             py-2.5
@@ -105,7 +107,6 @@ function CreateBoardModal({ open, onCloseModal }: CreateBoardModalProps) {
 
             <button
               type="submit"
-              onClick={handleCreateDrawingBoard}
               className="
             px-5
             py-2.5

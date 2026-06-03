@@ -4,10 +4,11 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import DrawingRoom from "./pages/DrawingRoom";
 import { Toaster } from "react-hot-toast";
+import { SocketProvider } from "./contexts/socket/SocketProvider";
 
 function App() {
   return (
-    <>
+    <SocketProvider>
       <BrowserRouter>
         <Routes>
           <Route path="/dashboard" element={<Dashboard />} />
@@ -17,7 +18,7 @@ function App() {
         </Routes>
       </BrowserRouter>
       <Toaster />
-    </>
+    </SocketProvider>
   );
 }
 
