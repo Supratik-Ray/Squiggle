@@ -1,16 +1,40 @@
 import Modal from "react-responsive-modal";
+import { generateRoomCode } from "../../utils/generateRoomCode";
+import { useState } from "react";
+import toast from "react-hot-toast";
 
 type CreateBoardModalProps = {
   open: boolean;
   onCloseModal: () => void;
-  handleCreateDrawingBoard: () => void;
 };
 
-function CreateBoardModal({
-  open,
-  onCloseModal,
-  handleCreateDrawingBoard,
-}: CreateBoardModalProps) {
+function CreateBoardModal({ open, onCloseModal }: CreateBoardModalProps) {
+  const [boardName, setBoardName] = useState("");
+
+  const handleCreateDrawingBoard = async () => {
+    const roomCode = generateRoomCode();
+
+    const response = await fetch("http://localhost:8000/api/boards", {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        boardName,
+        roomCode,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || "Request failed");
+    }
+
+    toast.success("successfully created board!");
+    console.log(data);
+  };
   return (
     <Modal
       open={open}
@@ -40,6 +64,8 @@ function CreateBoardModal({
             </label>
 
             <input
+              value={boardName}
+              onChange={(e) => setBoardName(e.target.value)}
               id="boardName"
               type="text"
               placeholder="e.g. Product Brainstorm"

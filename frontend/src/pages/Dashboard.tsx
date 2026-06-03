@@ -2,20 +2,14 @@ import { Plus } from "lucide-react";
 import DashboardNavbar from "../components/dashboard/DashboardNavbar";
 import WelcomeMessage from "../components/dashboard/WelcomeMessage";
 import "react-responsive-modal/styles.css";
-import { useSession } from "../lib/auth-client";
 import { useState } from "react";
 import CreateBoardModal from "../components/dashboard/CreateBoardModal";
 
 function Dashboard() {
-  const { data: session } = useSession();
-  const user = session?.user;
-
   const [open, setOpen] = useState(false);
 
   const onOpenModal = () => setOpen(true);
   const onCloseModal = () => setOpen(false);
-
-  const handleCreateDrawingBoard = () => {};
 
   return (
     <div className="h-screen flex flex-col">
@@ -34,11 +28,7 @@ function Dashboard() {
             </button>
           </div>
         </section>
-        <CreateBoardModal
-          open={open}
-          onCloseModal={onCloseModal}
-          handleCreateDrawingBoard={handleCreateDrawingBoard}
-        />
+        <CreateBoardModal open={open} onCloseModal={onCloseModal} />
       </main>
     </div>
   );
