@@ -12,7 +12,10 @@ export const auth = betterAuth({
     enabled: true,
   },
   secret: process.env.BETTER_AUTH_SECRET,
-  baseURL: `http://localhost:${process.env.PORT}`,
+
+  baseURL: `http://localhost:${process.env.PORT}`, //backend url
+
+  trustedOrigins: ["http://localhost:5173", "http://localhost:5174"],
 
   socialProviders: {
     github: {

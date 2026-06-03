@@ -6,13 +6,20 @@ import { Server } from "socket.io";
 import { connectToDb } from "./lib/db.js";
 import { toNodeHandler } from "better-auth/node";
 import { auth } from "./lib/auth.js";
+import cors from "cors";
 
 const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer);
 
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    credentials: true,
+  }),
+);
 app.use(express.json());
-app.all("/api/auth/*", toNodeHandler(auth));
+app.all("/api/auth/{*path}", toNodeHandler(auth));
 
 app.get("/", (req: Request, res: Response) => {
   res.status(StatusCodes.OK).json({

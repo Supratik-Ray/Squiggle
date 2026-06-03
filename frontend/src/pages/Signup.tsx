@@ -1,5 +1,7 @@
+import { AuthForm } from "../components/AuthForm";
+
 function Signup() {
-  return <div>SIgnup</div>;
+  return <AuthForm mode="register" />;
 }
 
 export default Signup;
