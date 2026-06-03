@@ -29,7 +29,7 @@ function CreateBoardModal({ open, onCloseModal }: CreateBoardModalProps) {
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.message || "Request failed");
+      toast.error("failed to create board!");
     }
 
     toast.success("successfully created board!");
