@@ -1,4 +1,6 @@
+import { Link } from "react-router-dom";
 import { signIn, signUp } from "../lib/auth-client";
+import toast from "react-hot-toast";
 
 export function AuthForm({ mode }: { mode: "login" | "register" }) {
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -6,14 +8,24 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
     const form = new FormData(e.currentTarget);
     const email = form.get("email") as string;
     const password = form.get("password") as string;
+
+    let result;
     if (mode === "register") {
-      await signUp.email({ email, password, name: email.split("@")[0] });
+      result = await signUp.email({
+        email,
+        password,
+        name: email.split("@")[0],
+      });
     } else {
-      await signIn.email({
+      result = await signIn.email({
         email,
         password,
         callbackURL: "http://localhost:5173/dashboard",
       });
+    }
+
+    if (result.error) {
+      toast.error(result.error.message || "some error occured!");
     }
   }
 
@@ -85,11 +97,17 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
           Continue with GitHub
         </button>
 
-        <p className="mt-4 text-center text-sm text-gray-500">
-          {mode === "login"
-            ? "Don't have an account?"
-            : "Already have an account?"}
-        </p>
+        <div className="mt-4 text-center text-sm text-gray-500">
+          {mode === "login" ? (
+            <p>
+              Don't have an account? <Link to="/auth/signup">Sigup</Link>
+            </p>
+          ) : (
+            <p>
+              Already have an account? <Link to="/auth/login">Login</Link>
+            </p>
+          )}
+        </div>
       </form>
     </div>
   );
