@@ -1,1 +1,9 @@
 @import "tailwindcss";
+
+.customModal {
+  /* background: red !important; */
+  max-width: 500px !important;
+  width: 100% !important;
+  border-radius: 10px !important;
+  padding: 50px !important;
+}
