@@ -1,0 +1,44 @@
+import type { Request, Response } from "express";
+import { Board } from "../models/Board.js";
+
+export async function getAllBoards(req: Request, res: Response) {
+  const user = req.user;
+
+  const boards = await Board.find({ ownerId: user.id });
+  res.status(200).json({
+    success: true,
+    data: boards,
+  });
+}
+export async function createBoard(req: Request, res: Response) {
+  const { name, roomId } = req.body;
+  const user = req.user;
+
+  const newBoard = await Board.create({
+    name,
+    roomId,
+    ownerId: user.id,
+  });
+
+  res.status(201).json({ success: true, data: newBoard });
+}
+
+export async function updateBoard(req: Request, res: Response) {
+  const { roomId } = req.params;
+  const updatedBoard = await Board.findOneAndUpdate(
+    { roomId: roomId as string },
+    req.body,
+    { new: true },
+  );
+
+  res.status(200).json({ success: true, data: updatedBoard });
+}
+
+export async function deleteBoard(req: Request, res: Response) {
+  const { roomId } = req.params;
+  const deletedBoard = await Board.findOneAndDelete({
+    roomId: roomId as string,
+  });
+
+  res.status(200).json({ success: true, data: deletedBoard });
+}
