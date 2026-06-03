@@ -3,10 +3,16 @@ import express, { type Request, type Response } from "express";
 import { createServer } from "http";
 import { StatusCodes } from "http-status-codes";
 import { Server } from "socket.io";
+import { connectToDb } from "./lib/db.js";
+import { toNodeHandler } from "better-auth/node";
+import { auth } from "./lib/auth.js";
 
 const app = express();
-const httpServer = createServer(express);
+const httpServer = createServer(app);
 const io = new Server(httpServer);
+
+app.use(express.json());
+app.all("/api/auth/*", toNodeHandler(auth));
 
 app.get("/", (req: Request, res: Response) => {
   res.status(StatusCodes.OK).json({
@@ -26,4 +32,9 @@ io.on("connection", (socket) => {
 
 const port = process.env.PORT || 5000;
 
-httpServer.listen(port, () => console.log(`Server listening on port ${port}`));
+(async function () {
+  await connectToDb();
+  httpServer.listen(port, () =>
+    console.log(`Server listening on port ${port}`),
+  );
+})();
