@@ -12,6 +12,7 @@ export async function getAllBoards(req: Request, res: Response) {
 }
 export async function createBoard(req: Request, res: Response) {
   const { name, roomId } = req.body;
+
   const user = req.user;
 
   const newBoard = await Board.create({
