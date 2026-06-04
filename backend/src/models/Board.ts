@@ -19,6 +19,11 @@ const boardSchema = new mongoose.Schema(
       required: true,
       index: true,
     },
+    collaborators: [
+      {
+        type: String,
+      },
+    ],
     canvasData: {
       type: Schema.Types.Mixed,
       default: {},

@@ -5,13 +5,8 @@ import "react-responsive-modal/styles.css";
 import { useEffect, useState } from "react";
 import CreateBoardModal from "../components/dashboard/CreateBoardModal";
 import toast from "react-hot-toast";
-
-interface Board {
-  _id: string;
-  name: string;
-  roomId: string;
-  createdAt: string;
-}
+import BoardCard from "../components/dashboard/BoardCard";
+import { type Board } from "../types/Board";
 
 function Dashboard() {
   const [drawingBoards, setDrawingBoards] = useState<Board[]>([]);
@@ -85,24 +80,7 @@ function Dashboard() {
           ) : (
             <div className="grid gap-6 mt-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {drawingBoards.map((board) => (
-                <div
-                  key={board._id}
-                  className="group cursor-pointer bg-white rounded-2xl border border-slate-200 p-6 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-200"
-                >
-                  <div className="h-32 rounded-xl bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 mb-5" />
-
-                  <h3 className="font-bold text-lg text-slate-900 truncate">
-                    {board.name}
-                  </h3>
-
-                  <p className="text-sm text-slate-500 mt-2">
-                    Room Code: {board.roomId}
-                  </p>
-
-                  <p className="text-xs text-slate-400 mt-4">
-                    Created {new Date(board.createdAt).toLocaleDateString()}
-                  </p>
-                </div>
+                <BoardCard board={board} />
               ))}
             </div>
           )}
