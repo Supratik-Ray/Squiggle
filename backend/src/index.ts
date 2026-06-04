@@ -81,6 +81,8 @@ io.on("connection", (socket) => {
   console.log(`socketID: ${socket.id} connected`);
 
   socket.on("room:join", ({ roomId }) => {
+    //check if user can join the room
+
     //create room if it doesnt exist
     if (!rooms.has(roomId)) {
       rooms.set(roomId, new Map());

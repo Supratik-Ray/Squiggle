@@ -39,15 +39,22 @@ function DrawingRoom() {
     [],
   );
 
+  const handleNewUserJoined = useCallback(({ user }: { user: Participant }) => {
+    setParticipants((prev) => [...prev, user]);
+    toast.success(`${user.name} joined the room!`);
+  }, []);
+
   useEffect(() => {
     socket?.on("socket:error", handleSocketError);
     socket?.on("room:joined", handleRoomJoined);
+    socket?.on("user:joined", handleNewUserJoined);
 
     return () => {
       socket?.removeListener("room:joined", handleRoomJoined);
       socket?.removeListener("socket:error", handleSocketError);
+      socket?.removeListener("user:joined", handleNewUserJoined);
     };
-  }, [socket, handleRoomJoined, handleSocketError]);
+  }, [socket, handleRoomJoined, handleSocketError, handleNewUserJoined]);
 
   useEffect(() => {
     socket?.emit("room:join", { roomId });
@@ -72,7 +79,7 @@ function DrawingRoom() {
 
   return (
     <div className="flex flex-col h-screen">
-      <RoomNavbar roomId={roomId} participants={participants} />
+      <RoomNavbar roomId={roomId as string} participants={participants} />
       <div className="flex flex-1">
         <Toolbar fabricRef={fabricRef} />
         <main ref={containerRef} className="flex-1 overflow-hidden">
