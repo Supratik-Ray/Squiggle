@@ -14,7 +14,7 @@ function App() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/auth/login" element={<Login />} />
           <Route path="/auth/signup" element={<Signup />} />
-          <Route path="/drawing-room/:roomId" element={<DrawingRoom />} />
+          <Route path="/drawing-board/:roomId" element={<DrawingRoom />} />
         </Routes>
       </BrowserRouter>
       <Toaster />

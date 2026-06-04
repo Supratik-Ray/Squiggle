@@ -1,8 +1,10 @@
+import { Link } from "react-router-dom";
 import type { Board } from "../../types/Board";
 
 function BoardCard({ board }: { board: Board }) {
   return (
-    <div
+    <Link
+      to={`/drawing-board/${board.roomId}`}
       key={board._id}
       className="group cursor-pointer bg-white rounded-2xl border border-slate-200 p-6 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-200"
     >
@@ -17,7 +19,7 @@ function BoardCard({ board }: { board: Board }) {
       <p className="text-xs text-slate-400 mt-4">
         Created {new Date(board.createdAt).toLocaleDateString()}
       </p>
-    </div>
+    </Link>
   );
 }
 

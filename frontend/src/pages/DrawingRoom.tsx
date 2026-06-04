@@ -1,13 +1,57 @@
 import { Canvas } from "fabric";
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import Toolbar from "../components/Toolbar";
 import RoomNavbar from "../components/RoomNavbar";
+import { useSocket } from "../contexts/socket/useSocket";
+import { useNavigate, useParams } from "react-router-dom";
+import toast from "react-hot-toast";
+import type { Participant } from "../types/Participant";
 
 function DrawingRoom() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const fabricRef = useRef<Canvas | null>(null);
   const containerRef = useRef<HTMLElement | null>(null);
+  const { socket } = useSocket();
+  const { roomId } = useParams();
+  const navigate = useNavigate();
+  const [participants, setParticipants] = useState<Participant[]>([]);
+
+  const handleSocketError = useCallback(
+    ({ error }: { error: string }) => {
+      toast.error(error);
+      navigate("/dashboard");
+    },
+    [navigate],
+  );
+
+  const handleRoomJoined = useCallback(
+    ({
+      roomId,
+      participants,
+    }: {
+      roomId: string;
+      participants: Participant[];
+    }) => {
+      setParticipants(participants);
+      toast.success(`joined board with room-id: ${roomId}`);
+    },
+    [],
+  );
+
+  useEffect(() => {
+    socket?.on("socket:error", handleSocketError);
+    socket?.on("room:joined", handleRoomJoined);
+
+    return () => {
+      socket?.removeListener("room:joined", handleRoomJoined);
+      socket?.removeListener("socket:error", handleSocketError);
+    };
+  }, [socket, handleRoomJoined, handleSocketError]);
+
+  useEffect(() => {
+    socket?.emit("room:join", { roomId });
+  }, [roomId, socket]);
 
   useEffect(() => {
     if (canvasRef.current) {
@@ -28,7 +72,7 @@ function DrawingRoom() {
 
   return (
     <div className="flex flex-col h-screen">
-      <RoomNavbar />
+      <RoomNavbar roomId={roomId} participants={participants} />
       <div className="flex flex-1">
         <Toolbar fabricRef={fabricRef} />
         <main ref={containerRef} className="flex-1 overflow-hidden">

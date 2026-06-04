@@ -3,7 +3,7 @@ import { signIn, signUp } from "../lib/auth-client";
 import toast from "react-hot-toast";
 
 export function AuthForm({ mode }: { mode: "login" | "register" }) {
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = new FormData(e.currentTarget);
     const email = form.get("email") as string;
