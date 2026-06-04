@@ -9,6 +9,7 @@ import { auth } from "./lib/auth.js";
 import cors from "cors";
 import boardRoutes from "./routes/board.routes.js";
 import { requireAuth } from "./middlewares/auth.middleware.js";
+import { Board } from "./models/Board.js";
 
 const app = express();
 const httpServer = createServer(app);
@@ -80,11 +81,29 @@ io.use(async (socket, next) => {
 io.on("connection", (socket) => {
   console.log(`socketID: ${socket.id} connected`);
 
-  socket.on("room:join", ({ roomId }) => {
+  socket.on("room:join", async ({ roomId }) => {
     //check if user can join the room
-
-    //create room if it doesnt exist
+    //get room
+    const requestedRoom = await Board.findOne({ roomId });
+    //check if board exist
+    if (!requestedRoom) {
+      socket.emit("socket:error", {
+        error: "board with this roomId doesn't exist!",
+      });
+      return;
+    }
+    //check if user is the owner or collaborator
+    if (
+      requestedRoom.ownerId != socket.data.userId &&
+      !requestedRoom.collaborators.includes(socket.data.userId)
+    ) {
+      socket.emit("socket:error", {
+        error: "you don't have permission to join board!",
+      });
+      return;
+    }
     if (!rooms.has(roomId)) {
+      //create room if it doesnt exist
       rooms.set(roomId, new Map());
     }
 
