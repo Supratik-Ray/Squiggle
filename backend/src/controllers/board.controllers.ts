@@ -35,13 +35,24 @@ export async function createBoard(req: Request, res: Response) {
   res.status(201).json({ success: true, data: newBoard });
 }
 
-export async function updateBoard(req: Request, res: Response) {
+export async function joinBoard(req: Request, res: Response) {
   const { roomId } = req.params;
+  const userId = req.user.id;
   const updatedBoard = await Board.findOneAndUpdate(
     { roomId: roomId as string },
-    req.body,
+    {
+      $addToSet: {
+        contributors: userId,
+      },
+    },
     { new: true },
   );
+
+  if (!updatedBoard) {
+    return res.status(404).json({
+      message: "Board not found",
+    });
+  }
 
   res.status(200).json({ success: true, data: updatedBoard });
 }
