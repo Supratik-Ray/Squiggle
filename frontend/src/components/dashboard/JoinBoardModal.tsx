@@ -2,6 +2,7 @@ import Modal from "react-responsive-modal";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
+import { useJoinBoard } from "../../hooks/useJoinBoard";
 
 type JoinBoardModalProps = {
   open: boolean;
@@ -11,6 +12,7 @@ type JoinBoardModalProps = {
 function JoinBoardModal({ open, onCloseModal }: JoinBoardModalProps) {
   const [roomId, setRoomId] = useState("");
   const navigate = useNavigate();
+  const mutation = useJoinBoard();
 
   const handleJoinBoard = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -20,31 +22,12 @@ function JoinBoardModal({ open, onCloseModal }: JoinBoardModalProps) {
       return;
     }
 
-    try {
-      const response = await fetch(
-        `http://localhost:8000/api/boards/${roomId}/join`,
-        {
-          method: "POST",
-          credentials: "include",
-        },
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        toast.error("Board not found");
-        return;
-      }
-
-      toast.success("Successfully joined board!");
-      console.log(data);
-
-      onCloseModal();
-      navigate(`/drawing-board/${roomId}`);
-    } catch (error) {
-      console.log(error);
-      toast.error("Failed to join board");
-    }
+    mutation.mutate(roomId, {
+      onSuccess: () => {
+        navigate(`/drawing-board/${roomId}`);
+        onCloseModal();
+      },
+    });
   };
 
   return (

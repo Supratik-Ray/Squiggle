@@ -18,6 +18,7 @@ function CreateBoardModal({ open, onCloseModal }: CreateBoardModalProps) {
     e.preventDefault();
     const roomCode = generateRoomCode();
     mutation.mutate({ name: boardName, roomId: roomCode });
+    setBoardName("");
     onCloseModal();
   };
   return (
