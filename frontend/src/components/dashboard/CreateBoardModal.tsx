@@ -1,7 +1,7 @@
 import Modal from "react-responsive-modal";
 import { generateRoomCode } from "../../utils/generateRoomCode";
 import { useState } from "react";
-import toast from "react-hot-toast";
+import { useCreateBoard } from "../../hooks/useCreateBoard";
 
 type CreateBoardModalProps = {
   open: boolean;
@@ -9,6 +9,7 @@ type CreateBoardModalProps = {
 };
 
 function CreateBoardModal({ open, onCloseModal }: CreateBoardModalProps) {
+  const mutation = useCreateBoard();
   const [boardName, setBoardName] = useState("");
 
   const handleCreateDrawingBoard = async (
@@ -16,27 +17,8 @@ function CreateBoardModal({ open, onCloseModal }: CreateBoardModalProps) {
   ) => {
     e.preventDefault();
     const roomCode = generateRoomCode();
-
-    const response = await fetch("http://localhost:8000/api/boards", {
-      method: "POST",
-      credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        name: boardName,
-        roomId: roomCode,
-      }),
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      toast.error("failed to create board!");
-    }
-
-    toast.success("successfully created board!");
-    console.log(data);
+    mutation.mutate({ name: boardName, roomId: roomCode });
+    onCloseModal();
   };
   return (
     <Modal
@@ -119,7 +101,7 @@ function CreateBoardModal({ open, onCloseModal }: CreateBoardModalProps) {
             shadow-sm
           "
             >
-              Create Board
+              {mutation.isPending ? "Creating..." : "Create Board"}
             </button>
           </div>
         </form>

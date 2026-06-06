@@ -2,45 +2,27 @@ import { Loader2, Plus } from "lucide-react";
 import DashboardNavbar from "../components/dashboard/DashboardNavbar";
 import WelcomeMessage from "../components/dashboard/WelcomeMessage";
 import "react-responsive-modal/styles.css";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import CreateBoardModal from "../components/dashboard/CreateBoardModal";
-import toast from "react-hot-toast";
 import BoardCard from "../components/dashboard/BoardCard";
 import { type Board } from "../types/Board";
+import { useQuery } from "@tanstack/react-query";
+import { getBoards } from "../api/boards";
 
 function Dashboard() {
-  const [drawingBoards, setDrawingBoards] = useState<Board[]>([]);
-  const [isLoading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
 
   const onOpenModal = () => setOpen(true);
   const onCloseModal = () => setOpen(false);
 
-  async function fetchBoards() {
-    try {
-      setLoading(true);
-
-      const response = await fetch("http://localhost:8000/api/boards", {
-        credentials: "include",
-      });
-
-      if (!response.ok) {
-        throw toast.error("Failed to fetch boards");
-      }
-
-      const data = await response.json();
-
-      setDrawingBoards(data.data ?? []);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    fetchBoards();
-  }, []);
+  const {
+    data: drawingBoards = [],
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["boards"],
+    queryFn: getBoards,
+  });
 
   return (
     <div className="h-screen flex flex-col bg-slate-50">
@@ -63,10 +45,21 @@ function Dashboard() {
               New Board
             </button>
           </div>
-
           {isLoading ? (
             <div className="flex justify-center items-center py-24">
               <Loader2 size={40} className="animate-spin text-blue-700" />
+            </div>
+          ) : error ? (
+            <div className="mt-12 rounded-2xl border border-red-200 bg-red-50 p-6 text-center">
+              <h3 className="text-lg font-semibold text-red-700">
+                Failed to load boards
+              </h3>
+
+              <p className="text-red-600 mt-2">
+                {error instanceof Error
+                  ? error.message
+                  : "Something went wrong."}
+              </p>
             </div>
           ) : drawingBoards.length === 0 ? (
             <div className="mt-12 rounded-2xl border border-dashed border-slate-300 bg-white p-12 text-center">
@@ -79,8 +72,8 @@ function Dashboard() {
             </div>
           ) : (
             <div className="grid gap-6 mt-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {drawingBoards.map((board) => (
-                <BoardCard board={board} />
+              {drawingBoards.map((board: Board) => (
+                <BoardCard key={board._id} board={board} />
               ))}
             </div>
           )}

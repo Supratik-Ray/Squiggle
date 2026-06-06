@@ -2,8 +2,10 @@ import { Link } from "react-router-dom";
 import { Copy, Trash2 } from "lucide-react";
 import type { Board } from "../../types/Board";
 import toast from "react-hot-toast";
+import { useDeleteBoard } from "../../hooks/useDeleteBoard";
 
 function BoardCard({ board }: { board: Board }) {
+  const mutation = useDeleteBoard();
   const handleCopy = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
@@ -15,7 +17,7 @@ function BoardCard({ board }: { board: Board }) {
   const handleDelete = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
-
+    mutation.mutate(board.roomId);
     console.log("Delete board:", board._id);
   };
 
