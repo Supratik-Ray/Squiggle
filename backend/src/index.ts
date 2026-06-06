@@ -2,7 +2,7 @@ import "dotenv/config";
 import express, { type Request, type Response } from "express";
 import { createServer } from "http";
 import { StatusCodes } from "http-status-codes";
-import { Server } from "socket.io";
+import { Server, Socket } from "socket.io";
 import { connectToDb } from "./lib/db.js";
 import { toNodeHandler } from "better-auth/node";
 import { auth } from "./lib/auth.js";
@@ -132,31 +132,36 @@ io.on("connection", (socket) => {
     socket.to(roomId).emit("user:joined", { user: userPayload });
   });
 
-  socket.on("disconnect", () => {
-    if (socket.id in socketToRoomMapping) {
-      //remove user from room
-      const roomId = socketToRoomMapping[socket.id];
-      if (roomId) {
-        const room = rooms.get(roomId);
-        room?.delete(socket.id);
+  function leaveRoom(socket: Socket) {
+    if (!(socket.id in socketToRoomMapping)) return;
 
-        //delete the room if no user in the room
-        if (room?.size === 0) {
-          rooms.delete(roomId);
-        }
+    const roomId = socketToRoomMapping[socket.id];
+
+    if (roomId) {
+      const room = rooms.get(roomId);
+
+      room?.delete(socket.id);
+
+      if (room?.size === 0) {
+        rooms.delete(roomId);
       }
-      //remove user from socket-to-room mapping
-      delete socketToRoomMapping[socket.id];
+
       const user = socket.data.user;
-      const userPayload = {
-        id: user.id,
-        name: user.name,
-        image: user.image,
-        socketId: socket.id,
-      };
-      socket.to(roomId!).emit("user:left", { user: userPayload });
+
+      socket.to(roomId).emit("user:left", {
+        user: {
+          id: user.id,
+          name: user.name,
+          image: user.image,
+          socketId: socket.id,
+        },
+      });
     }
-  });
+
+    delete socketToRoomMapping[socket.id];
+  }
+  socket.on("user:left", () => leaveRoom(socket));
+  socket.on("disconnect", () => leaveRoom(socket));
 });
 
 const port = process.env.PORT || 5000;

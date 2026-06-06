@@ -44,20 +44,36 @@ function DrawingRoom() {
     toast.success(`${user.name} joined the room!`);
   }, []);
 
+  const handleUserLeft = useCallback(({ user }: { user: Participant }) => {
+    setParticipants((prev) => prev.filter((u) => u.id !== user.id));
+  }, []);
+
   useEffect(() => {
     socket?.on("socket:error", handleSocketError);
     socket?.on("room:joined", handleRoomJoined);
     socket?.on("user:joined", handleNewUserJoined);
+    socket?.on("user:left", handleUserLeft);
 
     return () => {
       socket?.removeListener("room:joined", handleRoomJoined);
       socket?.removeListener("socket:error", handleSocketError);
       socket?.removeListener("user:joined", handleNewUserJoined);
+      socket?.removeListener("user:joined", handleUserLeft);
     };
-  }, [socket, handleRoomJoined, handleSocketError, handleNewUserJoined]);
+  }, [
+    socket,
+    handleRoomJoined,
+    handleSocketError,
+    handleNewUserJoined,
+    handleUserLeft,
+  ]);
 
   useEffect(() => {
     socket?.emit("room:join", { roomId });
+
+    return () => {
+      socket?.emit("user:left");
+    };
   }, [roomId, socket]);
 
   useEffect(() => {

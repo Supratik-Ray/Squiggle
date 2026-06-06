@@ -23,6 +23,7 @@ export async function getBoard(req: Request, res: Response) {
   const board = await Board.findOne({ roomId });
   res.status(200).json({ success: true, data: board });
 }
+
 export async function createBoard(req: Request, res: Response) {
   const { name, roomId } = req.body;
 
