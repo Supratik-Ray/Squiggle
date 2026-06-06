@@ -17,14 +17,23 @@ function CreateBoardModal({ open, onCloseModal }: CreateBoardModalProps) {
   ) => {
     e.preventDefault();
     const roomCode = generateRoomCode();
-    mutation.mutate({ name: boardName, roomId: roomCode });
+    mutation.mutate(
+      { name: boardName, roomId: roomCode },
+      {
+        onSuccess: () => {
+          onCloseModal();
+        },
+      },
+    );
     setBoardName("");
-    onCloseModal();
   };
   return (
     <Modal
       open={open}
-      onClose={onCloseModal}
+      onClose={() => {
+        setBoardName("");
+        onCloseModal();
+      }}
       center
       classNames={{
         modal: "customModal",
@@ -89,6 +98,7 @@ function CreateBoardModal({ open, onCloseModal }: CreateBoardModalProps) {
             </button>
 
             <button
+              disabled={mutation.isPending}
               type="submit"
               className="
             px-5

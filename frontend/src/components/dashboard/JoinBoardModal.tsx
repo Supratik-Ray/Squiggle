@@ -33,7 +33,10 @@ function JoinBoardModal({ open, onCloseModal }: JoinBoardModalProps) {
   return (
     <Modal
       open={open}
-      onClose={onCloseModal}
+      onClose={() => {
+        setRoomId("");
+        onCloseModal();
+      }}
       center
       classNames={{
         modal: "customModal",
