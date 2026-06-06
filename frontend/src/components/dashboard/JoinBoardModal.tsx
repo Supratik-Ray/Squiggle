@@ -40,7 +40,7 @@ function JoinBoardModal({ open, onCloseModal }: JoinBoardModalProps) {
       console.log(data);
 
       onCloseModal();
-      navigate(`/board/${roomId}`);
+      navigate(`/drawing-board/${roomId}`);
     } catch (error) {
       console.log(error);
       toast.error("Failed to join board");

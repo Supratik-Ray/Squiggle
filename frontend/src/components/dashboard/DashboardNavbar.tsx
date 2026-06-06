@@ -1,7 +1,10 @@
 import { useNavigate } from "react-router-dom";
 import { signOut } from "../../lib/auth-client";
+import JoinBoardModal from "./JoinBoardModal";
+import { useState } from "react";
 
 function DashboardNavbar() {
+  const [open, setOpen] = useState(false);
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -18,7 +21,10 @@ function DashboardNavbar() {
       <h1 className="text-2xl font-bold">Squiggle</h1>
       <ul className="flex gap-3">
         <li>
-          <button className="px-6 py-3 bg-blue-800 text-white rounded-md">
+          <button
+            className="px-6 py-3 bg-blue-800 text-white rounded-md"
+            onClick={() => setOpen(true)}
+          >
             Join Room
           </button>
         </li>
@@ -31,6 +37,7 @@ function DashboardNavbar() {
           </button>
         </li>
       </ul>
+      <JoinBoardModal open={open} onCloseModal={() => setOpen(false)} />
     </nav>
   );
 }

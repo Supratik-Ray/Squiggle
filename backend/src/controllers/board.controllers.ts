@@ -4,7 +4,9 @@ import { Board } from "../models/Board.js";
 export async function getAllBoards(req: Request, res: Response) {
   const user = req.user;
 
-  const boards = await Board.find({ ownerId: user.id });
+  const boards = await Board.find({
+    $or: [{ ownerId: user.id }, { collaborators: user.id }],
+  });
   res.status(200).json({
     success: true,
     data: boards,
@@ -38,11 +40,12 @@ export async function createBoard(req: Request, res: Response) {
 export async function joinBoard(req: Request, res: Response) {
   const { roomId } = req.params;
   const userId = req.user.id;
+  console.log(roomId, userId);
   const updatedBoard = await Board.findOneAndUpdate(
     { roomId: roomId as string },
     {
       $addToSet: {
-        contributors: userId,
+        collaborators: userId,
       },
     },
     { new: true },
