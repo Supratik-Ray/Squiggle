@@ -36,7 +36,7 @@ function BoardCard({ board }: { board: Board }) {
         </button>
       </div>
 
-      <div className="h-32 rounded-xl bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 mb-5" />
+      <div className="h-32 rounded-xl bg-linear-to-br from-blue-500 via-indigo-500 to-purple-600 mb-5" />
 
       <h3 className="font-bold text-lg text-slate-900 truncate">
         {board.name}

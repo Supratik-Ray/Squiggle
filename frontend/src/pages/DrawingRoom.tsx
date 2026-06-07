@@ -1,4 +1,4 @@
-import { Canvas } from "fabric";
+import { Canvas, FabricObject, util, type FabricObjectProps } from "fabric";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import Toolbar from "../components/Toolbar";
@@ -7,11 +7,13 @@ import { useSocket } from "../contexts/socket/useSocket";
 import { useNavigate, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import type { Participant } from "../types/Participant";
+import { generateId } from "../utils/id";
 
 function DrawingRoom() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const fabricRef = useRef<Canvas | null>(null);
   const containerRef = useRef<HTMLElement | null>(null);
+  const isRemoteUpdate = useRef<boolean>(false);
   const { socket } = useSocket();
   const { roomId } = useParams();
   const navigate = useNavigate();
@@ -48,17 +50,85 @@ function DrawingRoom() {
     setParticipants((prev) => prev.filter((u) => u.id !== user.id));
   }, []);
 
+  const handleCreatePath = useCallback(
+    async ({ path }: { path: FabricObjectProps }) => {
+      const canvas = fabricRef.current;
+      if (!canvas) return;
+
+      const objs = await util.enlivenObjects([path]);
+
+      isRemoteUpdate.current = true;
+      canvas.add(objs[0] as FabricObject);
+      isRemoteUpdate.current = false;
+    },
+    [],
+  );
+
+  const handleObjectAdd = useCallback(
+    async ({ object }: { object: FabricObjectProps }) => {
+      isRemoteUpdate.current = true;
+
+      const objs = await util.enlivenObjects([object]);
+      fabricRef.current?.add(objs[0] as FabricObject);
+
+      isRemoteUpdate.current = false;
+    },
+    [],
+  );
+
+  const handleObjectMoving = useCallback(
+    ({
+      objectId,
+      left,
+      top,
+    }: {
+      objectId: string;
+      left: string;
+      top: string;
+    }) => {
+      const obj = fabricRef.current
+        ?.getObjects()
+        .find((o: FabricObject) => o.get("objectId") === objectId);
+
+      if (!obj) return;
+
+      obj.set({
+        left,
+        top,
+      });
+
+      fabricRef.current?.renderAll();
+    },
+    [],
+  );
+
+  const handleCanvasClear = useCallback(() => {
+    isRemoteUpdate.current = true;
+    fabricRef.current?.clear();
+    fabricRef.current?.set("backgroundColor", "#f5f5f5");
+    fabricRef.current?.renderAll();
+    isRemoteUpdate.current = false;
+  }, []);
+
   useEffect(() => {
     socket?.on("socket:error", handleSocketError);
     socket?.on("room:joined", handleRoomJoined);
     socket?.on("user:joined", handleNewUserJoined);
     socket?.on("user:left", handleUserLeft);
+    socket?.on("canvas:path:create", handleCreatePath);
+    socket?.on("canvas:object:add", handleObjectAdd);
+    socket?.on("canvas:object:moving", handleObjectMoving);
+    socket?.on("canvas:clear", handleCanvasClear);
 
     return () => {
       socket?.removeListener("room:joined", handleRoomJoined);
       socket?.removeListener("socket:error", handleSocketError);
       socket?.removeListener("user:joined", handleNewUserJoined);
       socket?.removeListener("user:joined", handleUserLeft);
+      socket?.removeListener("canvas:path:create", handleCreatePath);
+      socket?.removeListener("canvas:object:add", handleObjectAdd);
+      socket?.removeListener("canvas:object:moving", handleObjectMoving);
+      socket?.removeListener("canvas:clear", handleCanvasClear);
     };
   }, [
     socket,
@@ -66,6 +136,10 @@ function DrawingRoom() {
     handleSocketError,
     handleNewUserJoined,
     handleUserLeft,
+    handleCreatePath,
+    handleObjectAdd,
+    handleObjectMoving,
+    handleCanvasClear,
   ]);
 
   useEffect(() => {
@@ -82,16 +156,64 @@ function DrawingRoom() {
         backgroundColor: "#f5f5f5",
       });
 
-      fabricRef.current.setDimensions({
+      const canvas = fabricRef.current;
+
+      canvas.setDimensions({
         width: containerRef.current?.clientWidth,
         height: containerRef.current?.clientHeight,
+      });
+
+      canvas.on("path:created", (e) => {
+        if (isRemoteUpdate.current) return;
+        const path = e.path;
+
+        if (!path.get("objectId")) {
+          path.set("objectId", generateId());
+        }
+
+        socket?.emit("canvas:path:create", {
+          roomId,
+          path: path.toObject(["objectId"]),
+        });
+      });
+
+      canvas.on("object:added", (e) => {
+        if (isRemoteUpdate.current) return;
+
+        const obj = e.target;
+
+        if (!obj.get("objectId")) {
+          obj.set("objectId", generateId());
+        }
+        socket?.emit("canvas:object:add", {
+          roomId,
+          object: obj.toObject(["objectId"]),
+        });
+      });
+
+      canvas.on("object:moving", (e) => {
+        if (isRemoteUpdate.current) return;
+
+        const obj = e.target;
+
+        socket?.emit("canvas:object:moving", {
+          roomId,
+          objectId: obj?.get("objectId"),
+          left: obj?.left,
+          top: obj?.top,
+        });
+      });
+
+      canvas.on("canvas:cleared", () => {
+        if (isRemoteUpdate.current) return;
+        socket?.emit("canvas:clear", { roomId });
       });
     }
 
     return () => {
       fabricRef.current?.dispose();
     };
-  }, []);
+  }, [roomId, socket]);
 
   return (
     <div className="flex flex-col h-screen">

@@ -132,6 +132,22 @@ io.on("connection", (socket) => {
     socket.to(roomId).emit("user:joined", { user: userPayload });
   });
 
+  socket.on("canvas:path:create", ({ roomId, path }) => {
+    socket.to(roomId).emit("canvas:path:create", { path });
+  });
+
+  socket.on("canvas:object:add", ({ roomId, object }) => {
+    socket.to(roomId).emit("canvas:object:add", { object });
+  });
+
+  socket.on("canvas:object:moving", ({ roomId, objectId, left, top }) => {
+    socket.to(roomId).emit("canvas:object:moving", { objectId, left, top });
+  });
+
+  socket.on("canvas:clear", ({ roomId }) => {
+    socket.to(roomId).emit("canvas:clear");
+  });
+
   function leaveRoom(socket: Socket) {
     if (!(socket.id in socketToRoomMapping)) return;
 
