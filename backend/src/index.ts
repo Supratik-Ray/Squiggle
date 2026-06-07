@@ -125,9 +125,14 @@ io.on("connection", (socket) => {
     room?.set(socket.id, userPayload);
     socket.join(roomId);
     socketToRoomMapping[socket.id] = roomId;
+
+    //get board snapshot
+    const snapshot = requestedRoom.canvasData;
+
     socket.emit("room:joined", {
       roomId,
       participants: Array.from(room?.values() ?? []),
+      snapshot,
     });
     socket.to(roomId).emit("user:joined", { user: userPayload });
   });

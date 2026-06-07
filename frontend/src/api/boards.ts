@@ -27,3 +27,9 @@ export async function joinBoard(roomId: string) {
 export async function deleteBoard(roomId: string) {
   await api.delete(`/boards/${roomId}`);
 }
+
+export async function saveBoard(roomId: string, snapshot: JSON) {
+  await api.post(`/boards/${roomId}/snapshot`, {
+    canvasData: snapshot,
+  });
+}

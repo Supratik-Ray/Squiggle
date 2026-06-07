@@ -9,11 +9,11 @@ import {
   Shapes,
 } from "lucide-react";
 import { Compact } from "@uiw/react-color";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Canvas, PencilBrush, Rect, Textbox } from "fabric";
 
 function Toolbar({ fabricRef }: { fabricRef: React.RefObject<Canvas | null> }) {
-  const [hex, setHex] = useState("#fff");
+  const [hex, setHex] = useState("#000");
 
   const handleDrawOrErase = (option: "draw" | "erase") => {
     const canvas = fabricRef.current;
@@ -22,7 +22,7 @@ function Toolbar({ fabricRef }: { fabricRef: React.RefObject<Canvas | null> }) {
       canvas.freeDrawingBrush = new PencilBrush(canvas);
       if (canvas.freeDrawingBrush) {
         if (option === "draw") {
-          canvas.freeDrawingBrush.color = "#000";
+          canvas.freeDrawingBrush.color = hex;
           canvas.freeDrawingBrush.width = 8;
           canvas.defaultCursor = "crosshair";
         } else {
@@ -33,6 +33,14 @@ function Toolbar({ fabricRef }: { fabricRef: React.RefObject<Canvas | null> }) {
       }
     }
   };
+
+  useEffect(() => {
+    const canvas = fabricRef.current;
+
+    if (canvas && canvas.isDrawingMode && canvas.freeDrawingBrush) {
+      canvas.freeDrawingBrush.color = hex;
+    }
+  }, [hex, fabricRef]);
 
   const handleAddRectangle = () => {
     if (fabricRef.current) {

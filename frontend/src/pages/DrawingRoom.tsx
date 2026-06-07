@@ -8,6 +8,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import type { Participant } from "../types/Participant";
 import { generateId } from "../utils/id";
+import { saveBoard } from "../api/boards";
 
 function DrawingRoom() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -28,14 +29,37 @@ function DrawingRoom() {
   );
 
   const handleRoomJoined = useCallback(
-    ({
+    async ({
       roomId,
       participants,
+      snapshot,
     }: {
       roomId: string;
       participants: Participant[];
+      snapshot?: object;
     }) => {
       setParticipants(participants);
+
+      if (snapshot && fabricRef.current) {
+        isRemoteUpdate.current = true;
+        await fabricRef.current.loadFromJSON(snapshot);
+
+        // Re-lock all paths after restore
+        fabricRef.current.getObjects().forEach((obj) => {
+          if (obj.type === "path") {
+            obj.set({
+              selectable: false,
+              evented: false,
+              hasControls: false,
+              hasBorders: false,
+            });
+          }
+        });
+
+        fabricRef.current.renderAll();
+        isRemoteUpdate.current = false;
+      }
+
       toast.success(`joined board with room-id: ${roomId}`);
     },
     [],
@@ -168,6 +192,7 @@ function DrawingRoom() {
   }, [roomId, socket]);
 
   useEffect(() => {
+    FabricObject.customProperties = ["objectId"];
     if (canvasRef.current) {
       fabricRef.current = new Canvas(canvasRef.current, {
         backgroundColor: "#f5f5f5",
@@ -200,7 +225,7 @@ function DrawingRoom() {
 
         socket?.emit("canvas:path:create", {
           roomId,
-          path: path.toObject(["objectId"]),
+          path: path.toObject(),
         });
       });
 
@@ -214,7 +239,7 @@ function DrawingRoom() {
         }
         socket?.emit("canvas:object:add", {
           roomId,
-          object: obj.toObject(["objectId"]),
+          object: obj.toObject(),
         });
       });
 
@@ -259,6 +284,19 @@ function DrawingRoom() {
       fabricRef.current?.dispose();
     };
   }, [roomId, socket]);
+
+  //saves canvas snapshot to DB every 5 second
+  useEffect(() => {
+    const isLeader = participants[0]?.socketId === socket?.id;
+    if (!roomId || !isLeader) return;
+
+    const interval = setInterval(() => {
+      const snapshot = fabricRef.current?.toJSON();
+      saveBoard(roomId, snapshot);
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [roomId, participants, socket]);
 
   return (
     <div className="flex flex-col h-screen">

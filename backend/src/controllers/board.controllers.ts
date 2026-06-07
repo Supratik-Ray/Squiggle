@@ -13,6 +13,13 @@ export async function getAllBoards(req: Request, res: Response) {
   });
 }
 
+export async function saveBoard(req: Request, res: Response) {
+  const { roomId } = req.params;
+  const { canvasData } = req.body;
+  await Board.findOneAndUpdate({ roomId: roomId as string }, { canvasData });
+  res.status(201).json({ success: true });
+}
+
 export async function getBoard(req: Request, res: Response) {
   const { roomId } = req.params;
   if (!roomId)
