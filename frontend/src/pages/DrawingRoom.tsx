@@ -1,8 +1,8 @@
 import { Canvas, FabricObject, util, type FabricObjectProps } from "fabric";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import Toolbar from "../components/Toolbar";
-import RoomNavbar from "../components/RoomNavbar";
+import Toolbar from "../components/drawing-room/Toolbar";
+import RoomNavbar from "../components/drawing-room/RoomNavbar";
 import { useSocket } from "../contexts/socket/useSocket";
 import { useNavigate, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
@@ -110,6 +110,20 @@ function DrawingRoom() {
     isRemoteUpdate.current = false;
   }, []);
 
+  const handleObjectModified = useCallback(
+    ({ objectId, ...transform }: { objectId: string }) => {
+      const obj = fabricRef.current
+        ?.getObjects()
+        .find((o: FabricObject) => o.get("objectId") === objectId);
+
+      if (!obj) return;
+      obj.set(transform);
+      obj.setCoords();
+      fabricRef.current?.renderAll();
+    },
+    [],
+  );
+
   useEffect(() => {
     socket?.on("socket:error", handleSocketError);
     socket?.on("room:joined", handleRoomJoined);
@@ -119,6 +133,7 @@ function DrawingRoom() {
     socket?.on("canvas:object:add", handleObjectAdd);
     socket?.on("canvas:object:moving", handleObjectMoving);
     socket?.on("canvas:clear", handleCanvasClear);
+    socket?.on("canvas:object:modified", handleObjectModified);
 
     return () => {
       socket?.removeListener("room:joined", handleRoomJoined);
@@ -129,6 +144,7 @@ function DrawingRoom() {
       socket?.removeListener("canvas:object:add", handleObjectAdd);
       socket?.removeListener("canvas:object:moving", handleObjectMoving);
       socket?.removeListener("canvas:clear", handleCanvasClear);
+      socket?.removeListener("canvas:object:modified", handleObjectModified);
     };
   }, [
     socket,
@@ -140,6 +156,7 @@ function DrawingRoom() {
     handleObjectAdd,
     handleObjectMoving,
     handleCanvasClear,
+    handleObjectModified,
   ]);
 
   useEffect(() => {
@@ -164,8 +181,18 @@ function DrawingRoom() {
       });
 
       canvas.on("path:created", (e) => {
-        if (isRemoteUpdate.current) return;
         const path = e.path;
+        if (path) {
+          path.set({
+            selectable: false,
+            evented: false,
+            hasControls: false,
+            hasBorders: false,
+          });
+          canvas.discardActiveObject();
+          canvas.requestRenderAll();
+        }
+        if (isRemoteUpdate.current) return;
 
         if (!path.get("objectId")) {
           path.set("objectId", generateId());
@@ -207,6 +234,24 @@ function DrawingRoom() {
       canvas.on("canvas:cleared", () => {
         if (isRemoteUpdate.current) return;
         socket?.emit("canvas:clear", { roomId });
+      });
+
+      canvas.on("object:modified", (e) => {
+        if (isRemoteUpdate.current) return;
+
+        const obj = e.target;
+
+        socket?.emit("canvas:object:modified", {
+          roomId,
+          objectId: obj.get("objectId"),
+          left: obj.left,
+          top: obj.top,
+          scaleX: obj.scaleX,
+          scaleY: obj.scaleY,
+          angle: obj.angle,
+          flipX: obj.flipX,
+          flipY: obj.flipY,
+        });
       });
     }
 

@@ -1,4 +1,4 @@
-import type { Participant } from "../types/Participant";
+import type { Participant } from "../../types/Participant";
 
 function RoomNavbar({
   roomId,
