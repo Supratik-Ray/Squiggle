@@ -2,6 +2,8 @@ import {
   Pencil,
   Eraser,
   Square,
+  Circle,
+  Triangle,
   Type,
   Image,
   Trash2,
@@ -10,31 +12,44 @@ import {
 } from "lucide-react";
 import { Compact } from "@uiw/react-color";
 import { useCallback, useEffect, useState } from "react";
-import { Canvas, PencilBrush, Rect, Textbox } from "fabric";
+import {
+  Canvas,
+  PencilBrush,
+  Rect,
+  Textbox,
+  Circle as FabricCircle,
+  Triangle as FabricTriangle,
+} from "fabric";
+
+type Tool = "draw" | "erase" | null;
+
+const toolBtn = (
+  tool: Tool,
+  onClick: () => void,
+  icon: React.ReactNode,
+  label: string,
+  activeTool: Tool,
+) => (
+  <button
+    onClick={onClick}
+    className={`w-full flex items-center gap-3 rounded-lg border px-3 py-2 transition
+        ${
+          activeTool === tool
+            ? "border-blue-500 bg-blue-50 text-blue-600 font-medium"
+            : "border-gray-200 hover:bg-gray-100 text-gray-700"
+        }`}
+  >
+    {icon}
+    {label}
+  </button>
+);
 
 function Toolbar({ fabricRef }: { fabricRef: React.RefObject<Canvas | null> }) {
   const [hex, setHex] = useState("#000");
-  const [isErasing, setIsErasing] = useState(false);
-  const [isDrawing, setIsDrawing] = useState(false);
+  const [activeTool, setActiveTool] = useState<Tool>(null);
 
-  const toggleDraw = () => {
-    setIsDrawing(!isDrawing);
-  };
-
-  useEffect(() => {
-    const canvas = fabricRef.current;
-    if (!canvas) return;
-
-    if (isDrawing) {
-      setIsErasing(false);
-      canvas.isDrawingMode = true;
-      canvas.freeDrawingBrush = new PencilBrush(canvas);
-      canvas.freeDrawingBrush.color = hex;
-      canvas.freeDrawingBrush.width = 8;
-    } else {
-      canvas.isDrawingMode = false;
-    }
-  }, [isDrawing, fabricRef, hex]);
+  const isErasing = activeTool === "erase";
+  const isDrawing = activeTool === "draw";
 
   const handleErase = useCallback(
     (e: MouseEvent) => {
@@ -46,8 +61,6 @@ function Toolbar({ fabricRef }: { fabricRef: React.RefObject<Canvas | null> }) {
         .getObjects()
         .filter((obj) => obj.containsPoint(pointer));
       if (objects.length) {
-        const objIds = objects.map((o) => o.get("objectId"));
-        console.log("objIds", objIds);
         canvas.remove(...objects);
         canvas.renderAll();
       }
@@ -55,16 +68,27 @@ function Toolbar({ fabricRef }: { fabricRef: React.RefObject<Canvas | null> }) {
     [fabricRef],
   );
 
-  const toggleErase = () => {
-    setIsErasing(!isErasing);
-  };
+  // Handle drawing mode
+  useEffect(() => {
+    const canvas = fabricRef.current;
+    if (!canvas) return;
 
+    if (isDrawing) {
+      canvas.isDrawingMode = true;
+      canvas.freeDrawingBrush = new PencilBrush(canvas);
+      canvas.freeDrawingBrush.color = hex;
+      canvas.freeDrawingBrush.width = 8;
+    } else {
+      canvas.isDrawingMode = false;
+    }
+  }, [isDrawing, fabricRef, hex]);
+
+  // Handle erase mode
   useEffect(() => {
     const canvas = fabricRef.current;
     if (!canvas) return;
 
     if (isErasing) {
-      setIsDrawing(false);
       canvas.isDrawingMode = false;
       canvas.selection = false;
       canvas.upperCanvasEl.addEventListener("mousemove", handleErase);
@@ -74,22 +98,11 @@ function Toolbar({ fabricRef }: { fabricRef: React.RefObject<Canvas | null> }) {
     }
   }, [isErasing, fabricRef, handleErase]);
 
-  const resetModes = () => {
-    setIsDrawing(false);
-    setIsErasing(false);
+  const selectTool = (tool: Tool) => {
+    setActiveTool((prev) => (prev === tool ? null : tool));
   };
 
-  //set drawing brush color on color change
-  // useEffect(() => {
-  //   const canvas = fabricRef.current;
-
-  //   if (canvas && canvas.isDrawingMode && canvas.freeDrawingBrush) {
-  //     canvas.freeDrawingBrush.color = hex;
-  //   }
-  // }, [hex, fabricRef]);
-
   const handleAddRectangle = () => {
-    resetModes();
     const rect = new Rect({
       left: 100,
       top: 100,
@@ -97,25 +110,44 @@ function Toolbar({ fabricRef }: { fabricRef: React.RefObject<Canvas | null> }) {
       width: 100,
       height: 100,
     });
-
     fabricRef.current?.add(rect);
   };
 
+  const handleAddCircle = () => {
+    const circle = new FabricCircle({
+      left: 100,
+      top: 100,
+      fill: hex,
+      radius: 50,
+    });
+    fabricRef.current?.add(circle);
+  };
+
+  const handleAddTriangle = () => {
+    const triangle = new FabricTriangle({
+      left: 100,
+      top: 100,
+      fill: hex,
+      width: 100,
+      height: 100,
+    });
+    fabricRef.current?.add(triangle);
+  };
+
   const handleAddTextBox = () => {
-    resetModes();
     const text = new Textbox("Hello React", {
       left: 100,
       top: 100,
       fontSize: 30,
       fill: hex,
     });
-
     fabricRef.current?.add(text);
   };
 
   const handleClearCanvas = () => {
     fabricRef.current?.clear();
   };
+
   return (
     <aside className="w-72 border-r bg-white flex flex-col p-4 gap-6">
       <div>
@@ -131,22 +163,20 @@ function Toolbar({ fabricRef }: { fabricRef: React.RefObject<Canvas | null> }) {
           <Pencil size={16} />
           <span>Drawing Tools</span>
         </div>
-
-        <button
-          onClick={toggleDraw}
-          className="w-full flex items-center gap-3 rounded-lg border px-3 py-2 hover:bg-gray-100 transition"
-        >
-          <Pencil size={18} />
-          Draw
-        </button>
-
-        <button
-          onClick={toggleErase}
-          className="w-full flex items-center gap-3 rounded-lg border px-3 py-2 hover:bg-gray-100 transition"
-        >
-          <Eraser size={18} />
-          Eraser
-        </button>
+        {toolBtn(
+          "draw",
+          () => selectTool("draw"),
+          <Pencil size={18} />,
+          "Draw",
+          activeTool,
+        )}
+        {toolBtn(
+          "erase",
+          () => selectTool("erase"),
+          <Eraser size={18} />,
+          "Eraser",
+          activeTool,
+        )}
       </div>
 
       {/* Elements */}
@@ -155,24 +185,35 @@ function Toolbar({ fabricRef }: { fabricRef: React.RefObject<Canvas | null> }) {
           <Shapes size={16} />
           <span>Elements</span>
         </div>
-
         <button
           onClick={handleAddRectangle}
-          className="w-full flex items-center gap-3 rounded-lg border px-3 py-2 hover:bg-gray-100 transition"
+          className="w-full flex items-center gap-3 rounded-lg border border-gray-200 px-3 py-2 hover:bg-gray-100 transition text-gray-700"
         >
           <Square size={18} />
           Rectangle
         </button>
-
+        <button
+          onClick={handleAddCircle}
+          className="w-full flex items-center gap-3 rounded-lg border border-gray-200 px-3 py-2 hover:bg-gray-100 transition text-gray-700"
+        >
+          <Circle size={18} />
+          Circle
+        </button>
+        <button
+          onClick={handleAddTriangle}
+          className="w-full flex items-center gap-3 rounded-lg border border-gray-200 px-3 py-2 hover:bg-gray-100 transition text-gray-700"
+        >
+          <Triangle size={18} />
+          Triangle
+        </button>
         <button
           onClick={handleAddTextBox}
-          className="w-full flex items-center gap-3 rounded-lg border px-3 py-2 hover:bg-gray-100 transition"
+          className="w-full flex items-center gap-3 rounded-lg border border-gray-200 px-3 py-2 hover:bg-gray-100 transition text-gray-700"
         >
           <Type size={18} />
           Text
         </button>
-
-        <button className="w-full flex items-center gap-3 rounded-lg border px-3 py-2 hover:bg-gray-100 transition">
+        <button className="w-full flex items-center gap-3 rounded-lg border border-gray-200 px-3 py-2 hover:bg-gray-100 transition text-gray-700">
           <Image size={18} />
           Image
         </button>
@@ -184,7 +225,6 @@ function Toolbar({ fabricRef }: { fabricRef: React.RefObject<Canvas | null> }) {
           <Palette size={16} />
           <span>Colors</span>
         </div>
-
         <div className="flex items-center gap-3">
           <div
             className="h-8 w-8 rounded border"
@@ -192,7 +232,6 @@ function Toolbar({ fabricRef }: { fabricRef: React.RefObject<Canvas | null> }) {
           />
           <span className="text-sm text-gray-600">{hex}</span>
         </div>
-
         <Compact color={hex} onChange={(color) => setHex(color.hex)} />
       </div>
 
