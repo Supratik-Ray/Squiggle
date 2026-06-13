@@ -9,43 +9,85 @@ import {
   Shapes,
 } from "lucide-react";
 import { Compact } from "@uiw/react-color";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Canvas, PencilBrush, Rect, Textbox } from "fabric";
 
 function Toolbar({ fabricRef }: { fabricRef: React.RefObject<Canvas | null> }) {
   const [hex, setHex] = useState("#000");
+  const [isErasing, setIsErasing] = useState(false);
+  const [isDrawing, setIsDrawing] = useState(false);
 
-  const handleDrawOrErase = (option: "draw" | "erase") => {
-    const canvas = fabricRef.current;
-    if (canvas) {
-      canvas.isDrawingMode = true;
-      canvas.freeDrawingBrush = new PencilBrush(canvas);
-      if (canvas.freeDrawingBrush) {
-        if (option === "draw") {
-          canvas.freeDrawingBrush.color = hex;
-          canvas.freeDrawingBrush.width = 8;
-          canvas.defaultCursor = "crosshair";
-        } else {
-          canvas.freeDrawingBrush.color = "#f5f5f5";
-          canvas.freeDrawingBrush.width = 20;
-          canvas.defaultCursor = "grab";
-        }
-      }
-    }
+  const toggleDraw = () => {
+    setIsDrawing(!isDrawing);
   };
 
   useEffect(() => {
     const canvas = fabricRef.current;
+    if (!canvas) return;
 
-    if (canvas && canvas.isDrawingMode && canvas.freeDrawingBrush) {
+    if (!isDrawing) {
+      canvas.isDrawingMode = false;
+    } else {
+      canvas.isDrawingMode = true;
+      canvas.freeDrawingBrush = new PencilBrush(canvas);
       canvas.freeDrawingBrush.color = hex;
+      canvas.freeDrawingBrush.width = 8;
     }
-  }, [hex, fabricRef]);
+  }, [isDrawing, fabricRef, hex]);
+
+  const handleErase = useCallback(
+    (e: MouseEvent) => {
+      const canvas = fabricRef.current;
+      if (!canvas) return;
+      if (e.buttons !== 1) return;
+      const pointer = canvas.getScenePoint(e);
+      const objects = canvas
+        .getObjects()
+        .filter((obj) => obj.containsPoint(pointer));
+      if (objects.length) {
+        canvas.remove(...objects);
+        canvas.renderAll();
+      }
+    },
+    [fabricRef],
+  );
+
+  const toggleErase = () => {
+    setIsErasing(!isErasing);
+  };
+
+  useEffect(() => {
+    const canvas = fabricRef.current;
+    if (!canvas) return;
+
+    if (!isErasing) {
+      canvas.isDrawingMode = false;
+      canvas.upperCanvasEl.removeEventListener("mousemove", handleErase);
+    } else {
+      canvas.isDrawingMode = true;
+      canvas.freeDrawingBrush = new PencilBrush(canvas);
+      canvas.freeDrawingBrush.color = "#f5f5f5";
+      canvas.freeDrawingBrush.width = 8;
+      canvas.upperCanvasEl.addEventListener("mousemove", handleErase);
+    }
+  }, [isErasing, fabricRef, handleErase]);
+
+  const resetModes = () => {
+    setIsDrawing(false);
+    setIsErasing(false);
+  };
+
+  //set drawing brush color on color change
+  // useEffect(() => {
+  //   const canvas = fabricRef.current;
+
+  //   if (canvas && canvas.isDrawingMode && canvas.freeDrawingBrush) {
+  //     canvas.freeDrawingBrush.color = hex;
+  //   }
+  // }, [hex, fabricRef]);
 
   const handleAddRectangle = () => {
-    if (fabricRef.current) {
-      fabricRef.current.isDrawingMode = false;
-    }
+    resetModes();
     const rect = new Rect({
       left: 100,
       top: 100,
@@ -58,6 +100,10 @@ function Toolbar({ fabricRef }: { fabricRef: React.RefObject<Canvas | null> }) {
   };
 
   const handleAddTextBox = () => {
+    if (fabricRef.current) {
+      fabricRef.current.isDrawingMode = false;
+      setIsErasing(false);
+    }
     const text = new Textbox("Hello React", {
       left: 100,
       top: 100,
@@ -88,7 +134,7 @@ function Toolbar({ fabricRef }: { fabricRef: React.RefObject<Canvas | null> }) {
         </div>
 
         <button
-          onClick={() => handleDrawOrErase("draw")}
+          onClick={toggleDraw}
           className="w-full flex items-center gap-3 rounded-lg border px-3 py-2 hover:bg-gray-100 transition"
         >
           <Pencil size={18} />
@@ -96,7 +142,7 @@ function Toolbar({ fabricRef }: { fabricRef: React.RefObject<Canvas | null> }) {
         </button>
 
         <button
-          onClick={() => handleDrawOrErase("erase")}
+          onClick={toggleErase}
           className="w-full flex items-center gap-3 rounded-lg border px-3 py-2 hover:bg-gray-100 transition"
         >
           <Eraser size={18} />

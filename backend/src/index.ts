@@ -157,6 +157,11 @@ io.on("connection", (socket) => {
     socket.to(roomId).emit("canvas:object:modified", properties);
   });
 
+  socket.on("canvas:text:update", ({ roomId, ...properties }) => {
+    console.log(properties);
+    socket.to(roomId).emit("canvas:text:update", properties);
+  });
+
   function leaveRoom(socket: Socket) {
     if (!(socket.id in socketToRoomMapping)) return;
 

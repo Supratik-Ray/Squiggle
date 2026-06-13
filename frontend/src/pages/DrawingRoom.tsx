@@ -1,4 +1,10 @@
-import { Canvas, FabricObject, util, type FabricObjectProps } from "fabric";
+import {
+  Canvas,
+  FabricObject,
+  util,
+  type FabricObjectProps,
+  type TextStyle,
+} from "fabric";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import Toolbar from "../components/drawing-room/Toolbar";
@@ -148,6 +154,41 @@ function DrawingRoom() {
     [],
   );
 
+  const handleTextUpdate = useCallback(
+    ({
+      objectId,
+      text,
+      styles,
+      left,
+      top,
+    }: {
+      objectId: string;
+      text: string;
+      styles: TextStyle;
+      left: number;
+      top: number;
+    }) => {
+      console.log("text:update", text);
+      const canvas = fabricRef.current;
+      const obj = canvas
+        ?.getObjects()
+        .find((o: FabricObject) => o.get("objectId") === objectId);
+
+      console.log(obj);
+      console.log(obj?.type);
+      if (obj && obj.type === "textbox") {
+        isRemoteUpdate.current = true;
+
+        obj.set({ text, styles, left, top });
+        obj.setCoords();
+        canvas?.renderAll();
+
+        isRemoteUpdate.current = false;
+      }
+    },
+    [],
+  );
+
   useEffect(() => {
     socket?.on("socket:error", handleSocketError);
     socket?.on("room:joined", handleRoomJoined);
@@ -158,6 +199,7 @@ function DrawingRoom() {
     socket?.on("canvas:object:moving", handleObjectMoving);
     socket?.on("canvas:clear", handleCanvasClear);
     socket?.on("canvas:object:modified", handleObjectModified);
+    socket?.on("canvas:text:update", handleTextUpdate);
 
     return () => {
       socket?.removeListener("room:joined", handleRoomJoined);
@@ -169,6 +211,7 @@ function DrawingRoom() {
       socket?.removeListener("canvas:object:moving", handleObjectMoving);
       socket?.removeListener("canvas:clear", handleCanvasClear);
       socket?.removeListener("canvas:object:modified", handleObjectModified);
+      socket?.removeListener("canvas:text:update", handleTextUpdate);
     };
   }, [
     socket,
@@ -181,6 +224,7 @@ function DrawingRoom() {
     handleObjectMoving,
     handleCanvasClear,
     handleObjectModified,
+    handleTextUpdate,
   ]);
 
   useEffect(() => {
@@ -276,6 +320,19 @@ function DrawingRoom() {
           angle: obj.angle,
           flipX: obj.flipX,
           flipY: obj.flipY,
+        });
+      });
+
+      canvas.on("text:changed", (e) => {
+        const obj = e.target;
+
+        socket?.emit("canvas:text:update", {
+          roomId,
+          objectId: obj.get("objectId"),
+          text: obj.text,
+          styles: obj.styles,
+          left: obj.left,
+          top: obj.top,
         });
       });
     }
