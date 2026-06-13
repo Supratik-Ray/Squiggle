@@ -25,13 +25,14 @@ function Toolbar({ fabricRef }: { fabricRef: React.RefObject<Canvas | null> }) {
     const canvas = fabricRef.current;
     if (!canvas) return;
 
-    if (!isDrawing) {
-      canvas.isDrawingMode = false;
-    } else {
+    if (isDrawing) {
+      setIsErasing(false);
       canvas.isDrawingMode = true;
       canvas.freeDrawingBrush = new PencilBrush(canvas);
       canvas.freeDrawingBrush.color = hex;
       canvas.freeDrawingBrush.width = 8;
+    } else {
+      canvas.isDrawingMode = false;
     }
   }, [isDrawing, fabricRef, hex]);
 
@@ -45,6 +46,8 @@ function Toolbar({ fabricRef }: { fabricRef: React.RefObject<Canvas | null> }) {
         .getObjects()
         .filter((obj) => obj.containsPoint(pointer));
       if (objects.length) {
+        const objIds = objects.map((o) => o.get("objectId"));
+        console.log("objIds", objIds);
         canvas.remove(...objects);
         canvas.renderAll();
       }
@@ -60,15 +63,14 @@ function Toolbar({ fabricRef }: { fabricRef: React.RefObject<Canvas | null> }) {
     const canvas = fabricRef.current;
     if (!canvas) return;
 
-    if (!isErasing) {
+    if (isErasing) {
+      setIsDrawing(false);
       canvas.isDrawingMode = false;
-      canvas.upperCanvasEl.removeEventListener("mousemove", handleErase);
-    } else {
-      canvas.isDrawingMode = true;
-      canvas.freeDrawingBrush = new PencilBrush(canvas);
-      canvas.freeDrawingBrush.color = "#f5f5f5";
-      canvas.freeDrawingBrush.width = 8;
+      canvas.selection = false;
       canvas.upperCanvasEl.addEventListener("mousemove", handleErase);
+    } else {
+      canvas.selection = true;
+      canvas.upperCanvasEl.removeEventListener("mousemove", handleErase);
     }
   }, [isErasing, fabricRef, handleErase]);
 
@@ -100,15 +102,12 @@ function Toolbar({ fabricRef }: { fabricRef: React.RefObject<Canvas | null> }) {
   };
 
   const handleAddTextBox = () => {
-    if (fabricRef.current) {
-      fabricRef.current.isDrawingMode = false;
-      setIsErasing(false);
-    }
+    resetModes();
     const text = new Textbox("Hello React", {
       left: 100,
       top: 100,
       fontSize: 30,
-      fill: "black",
+      fill: hex,
     });
 
     fabricRef.current?.add(text);

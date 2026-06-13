@@ -88,7 +88,14 @@ function DrawingRoom() {
       const objs = await util.enlivenObjects([path]);
 
       isRemoteUpdate.current = true;
-      canvas.add(objs[0] as FabricObject);
+      const obj = objs[0] as FabricObject;
+      obj.set({
+        selectable: false,
+        evented: false,
+        hasControls: false,
+        hasBorders: false,
+      });
+      canvas.add(obj);
       isRemoteUpdate.current = false;
     },
     [],
@@ -189,6 +196,26 @@ function DrawingRoom() {
     [],
   );
 
+  const handleObjectRemove = useCallback(
+    ({ objectId }: { objectId: string }) => {
+      isRemoteUpdate.current = true;
+
+      const canvas = fabricRef.current;
+      const obj = canvas
+        ?.getObjects()
+        .find((o: FabricObject) => o.get("objectId") === objectId);
+
+      console.log("removed object: ", obj);
+      if (obj) {
+        obj.dispose();
+        canvas?.remove(obj);
+        canvas?.renderAll();
+      }
+      isRemoteUpdate.current = false;
+    },
+    [],
+  );
+
   useEffect(() => {
     socket?.on("socket:error", handleSocketError);
     socket?.on("room:joined", handleRoomJoined);
@@ -200,6 +227,7 @@ function DrawingRoom() {
     socket?.on("canvas:clear", handleCanvasClear);
     socket?.on("canvas:object:modified", handleObjectModified);
     socket?.on("canvas:text:update", handleTextUpdate);
+    socket?.on("canvas:object:remove", handleObjectRemove);
 
     return () => {
       socket?.removeListener("room:joined", handleRoomJoined);
@@ -212,6 +240,7 @@ function DrawingRoom() {
       socket?.removeListener("canvas:clear", handleCanvasClear);
       socket?.removeListener("canvas:object:modified", handleObjectModified);
       socket?.removeListener("canvas:text:update", handleTextUpdate);
+      socket?.removeListener("canvas:object:remove", handleObjectRemove);
     };
   }, [
     socket,
@@ -225,6 +254,7 @@ function DrawingRoom() {
     handleCanvasClear,
     handleObjectModified,
     handleTextUpdate,
+    handleObjectRemove,
   ]);
 
   useEffect(() => {
@@ -250,6 +280,7 @@ function DrawingRoom() {
       });
 
       canvas.on("path:created", (e) => {
+        console.log("path:Created");
         const path = e.path;
         if (path) {
           path.set({
@@ -277,6 +308,9 @@ function DrawingRoom() {
         if (isRemoteUpdate.current) return;
 
         const obj = e.target;
+
+        // Paths are handled by path:created — skip them here
+        if (obj.type === "path") return;
 
         if (!obj.get("objectId")) {
           obj.set("objectId", generateId());
@@ -323,7 +357,18 @@ function DrawingRoom() {
         });
       });
 
+      canvas.on("object:removed", (e) => {
+        if (isRemoteUpdate.current) return;
+        const obj = e.target;
+        console.log("emitted: ", obj.get("objectId"));
+        socket?.emit("canvas:object:remove", {
+          roomId,
+          objectId: obj.get("objectId"),
+        });
+      });
+
       canvas.on("text:changed", (e) => {
+        if (isRemoteUpdate.current) return;
         const obj = e.target;
 
         socket?.emit("canvas:text:update", {

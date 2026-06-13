@@ -158,8 +158,11 @@ io.on("connection", (socket) => {
   });
 
   socket.on("canvas:text:update", ({ roomId, ...properties }) => {
-    console.log(properties);
     socket.to(roomId).emit("canvas:text:update", properties);
+  });
+
+  socket.on("canvas:object:remove", ({ roomId, objectId }) => {
+    socket.to(roomId).emit("canvas:object:remove", { objectId });
   });
 
   function leaveRoom(socket: Socket) {
