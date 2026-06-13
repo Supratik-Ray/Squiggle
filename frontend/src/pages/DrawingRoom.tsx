@@ -3,7 +3,9 @@ import {
   FabricObject,
   util,
   type FabricObjectProps,
+  type TEvent,
   type TextStyle,
+  type TPointerEvent,
 } from "fabric";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -25,6 +27,7 @@ function DrawingRoom() {
   const { roomId } = useParams();
   const navigate = useNavigate();
   const [participants, setParticipants] = useState<Participant[]>([]);
+  const [selectedObjId, setSelectedObjId] = useState<string | null>(null);
 
   const handleSocketError = useCallback(
     ({ error }: { error: string }) => {
@@ -175,14 +178,11 @@ function DrawingRoom() {
       left: number;
       top: number;
     }) => {
-      console.log("text:update", text);
       const canvas = fabricRef.current;
       const obj = canvas
         ?.getObjects()
         .find((o: FabricObject) => o.get("objectId") === objectId);
 
-      console.log(obj);
-      console.log(obj?.type);
       if (obj && obj.type === "textbox") {
         isRemoteUpdate.current = true;
 
@@ -205,7 +205,6 @@ function DrawingRoom() {
         ?.getObjects()
         .find((o: FabricObject) => o.get("objectId") === objectId);
 
-      console.log("removed object: ", obj);
       if (obj) {
         obj.dispose();
         canvas?.remove(obj);
@@ -280,7 +279,6 @@ function DrawingRoom() {
       });
 
       canvas.on("path:created", (e) => {
-        console.log("path:Created");
         const path = e.path;
         if (path) {
           path.set({
@@ -360,7 +358,7 @@ function DrawingRoom() {
       canvas.on("object:removed", (e) => {
         if (isRemoteUpdate.current) return;
         const obj = e.target;
-        console.log("emitted: ", obj.get("objectId"));
+
         socket?.emit("canvas:object:remove", {
           roomId,
           objectId: obj.get("objectId"),
@@ -379,6 +377,24 @@ function DrawingRoom() {
           left: obj.left,
           top: obj.top,
         });
+      });
+
+      const handleSelection = (
+        e: Partial<TEvent<TPointerEvent>> & {
+          selected: FabricObject[];
+        },
+      ) => {
+        const obj: FabricObject = e.selected[0];
+        if (obj) {
+          setSelectedObjId(obj.get("objectId"));
+        }
+      };
+
+      canvas.on("selection:created", handleSelection);
+      canvas.on("selection:updated", handleSelection);
+
+      canvas.on("selection:cleared", () => {
+        setSelectedObjId(null);
       });
     }
 
@@ -404,7 +420,7 @@ function DrawingRoom() {
     <div className="flex flex-col h-screen">
       <RoomNavbar roomId={roomId as string} participants={participants} />
       <div className="flex flex-1">
-        <Toolbar fabricRef={fabricRef} />
+        <Toolbar fabricRef={fabricRef} selectedObjId={selectedObjId} />
         <main ref={containerRef} className="flex-1 overflow-hidden">
           <canvas ref={canvasRef} />
         </main>

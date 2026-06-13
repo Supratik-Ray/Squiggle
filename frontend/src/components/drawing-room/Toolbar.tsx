@@ -19,6 +19,7 @@ import {
   Textbox,
   Circle as FabricCircle,
   Triangle as FabricTriangle,
+  FabricObject,
 } from "fabric";
 
 type Tool = "draw" | "erase" | null;
@@ -44,7 +45,13 @@ const toolBtn = (
   </button>
 );
 
-function Toolbar({ fabricRef }: { fabricRef: React.RefObject<Canvas | null> }) {
+function Toolbar({
+  fabricRef,
+  selectedObjId,
+}: {
+  fabricRef: React.RefObject<Canvas | null>;
+  selectedObjId: string | null;
+}) {
   const [hex, setHex] = useState("#000");
   const [activeTool, setActiveTool] = useState<Tool>(null);
 
@@ -103,6 +110,7 @@ function Toolbar({ fabricRef }: { fabricRef: React.RefObject<Canvas | null> }) {
   };
 
   const handleAddRectangle = () => {
+    setActiveTool(null);
     const rect = new Rect({
       left: 100,
       top: 100,
@@ -114,6 +122,7 @@ function Toolbar({ fabricRef }: { fabricRef: React.RefObject<Canvas | null> }) {
   };
 
   const handleAddCircle = () => {
+    setActiveTool(null);
     const circle = new FabricCircle({
       left: 100,
       top: 100,
@@ -124,6 +133,7 @@ function Toolbar({ fabricRef }: { fabricRef: React.RefObject<Canvas | null> }) {
   };
 
   const handleAddTriangle = () => {
+    setActiveTool(null);
     const triangle = new FabricTriangle({
       left: 100,
       top: 100,
@@ -135,6 +145,7 @@ function Toolbar({ fabricRef }: { fabricRef: React.RefObject<Canvas | null> }) {
   };
 
   const handleAddTextBox = () => {
+    setActiveTool(null);
     const text = new Textbox("Hello React", {
       left: 100,
       top: 100,
@@ -232,7 +243,23 @@ function Toolbar({ fabricRef }: { fabricRef: React.RefObject<Canvas | null> }) {
           />
           <span className="text-sm text-gray-600">{hex}</span>
         </div>
-        <Compact color={hex} onChange={(color) => setHex(color.hex)} />
+        <Compact
+          color={hex}
+          onChange={(color) => {
+            if (selectedObjId) {
+              const canvas = fabricRef.current;
+              const obj = canvas
+                ?.getObjects()
+                .find((o: FabricObject) => o.get("objectId") === selectedObjId);
+
+              if (obj) {
+                obj.set("fill", color.hex);
+                canvas?.renderAll();
+              }
+            }
+            setHex(color.hex);
+          }}
+        />
       </div>
 
       <div className="mt-auto">
