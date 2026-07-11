@@ -20,7 +20,7 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
       result = await signIn.email({
         email,
         password,
-        callbackURL: "http://localhost:5173/dashboard",
+        callbackURL: "https://squiggle-mauve.vercel.app/dashboard",
       });
     }
 
@@ -32,7 +32,7 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
   async function handleGithub() {
     await signIn.social({
       provider: "github",
-      callbackURL: "http://localhost:5173/dashboard",
+      callbackURL: "https://squiggle-mauve.vercel.app/dashboard",
     });
   }
 
