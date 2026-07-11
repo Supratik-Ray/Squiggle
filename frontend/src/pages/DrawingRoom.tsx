@@ -29,6 +29,8 @@ function DrawingRoom() {
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [selectedObjId, setSelectedObjId] = useState<string | null>(null);
 
+  const [isSaving, setIsSaving] = useState(false);
+
   const handleSocketError = useCallback(
     ({ error }: { error: string }) => {
       toast.error(error);
@@ -214,6 +216,15 @@ function DrawingRoom() {
     },
     [],
   );
+
+  const handleSaveBoard = useCallback(async () => {
+    if (!roomId) return;
+
+    const snapshot = fabricRef.current?.toJSON();
+    setIsSaving(true);
+    await saveBoard(roomId, snapshot);
+    setIsSaving(false);
+  }, [roomId]);
 
   useEffect(() => {
     socket?.on("socket:error", handleSocketError);
@@ -403,18 +414,15 @@ function DrawingRoom() {
     };
   }, [roomId, socket]);
 
-  //saves canvas snapshot to DB every 5 second
+  //saves canvas snapshot to DB every 15 second
   useEffect(() => {
     const isLeader = participants[0]?.socketId === socket?.id;
     if (!roomId || !isLeader) return;
 
-    const interval = setInterval(() => {
-      const snapshot = fabricRef.current?.toJSON();
-      saveBoard(roomId, snapshot);
-    }, 5000);
+    const interval = setInterval(handleSaveBoard, 15000);
 
     return () => clearInterval(interval);
-  }, [roomId, participants, socket]);
+  }, [roomId, participants, socket, handleSaveBoard]);
 
   useEffect(() => {
     const canvas = fabricRef.current;
@@ -441,7 +449,12 @@ function DrawingRoom() {
 
   return (
     <div className="flex h-screen flex-col overflow-hidden">
-      <RoomNavbar roomId={roomId as string} participants={participants} />
+      <RoomNavbar
+        roomId={roomId as string}
+        participants={participants}
+        onSave={handleSaveBoard}
+        isSaving={isSaving}
+      />
       <div className="flex flex-1 overflow-hidden">
         <Toolbar fabricRef={fabricRef} selectedObjId={selectedObjId} />
         <main ref={containerRef} className="relative flex-1 overflow-hidden">

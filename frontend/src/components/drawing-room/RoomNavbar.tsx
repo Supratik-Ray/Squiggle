@@ -1,11 +1,17 @@
+import toast from "react-hot-toast";
 import type { Participant } from "../../types/Participant";
+import { Save, LoaderCircle } from "lucide-react";
 
 function RoomNavbar({
   roomId,
   participants,
+  onSave,
+  isSaving,
 }: {
   roomId: string;
   participants: Participant[];
+  onSave: () => void;
+  isSaving: boolean;
 }) {
   return (
     <nav
@@ -52,6 +58,36 @@ function RoomNavbar({
             {roomId}
           </span>
         </div>
+
+        {/* Save */}
+        <button
+          onClick={() => {
+            onSave();
+            toast.success("Saved successfully!");
+          }}
+          className="
+    flex
+    items-center
+    gap-2
+    rounded-md
+    bg-blue-600
+    hover:bg-blue-700
+    text-white
+    px-3
+    py-2
+    text-sm
+    transition
+  "
+        >
+          {isSaving ? (
+            <LoaderCircle className="h-4 w-4 animate-spin" />
+          ) : (
+            <Save size={16} />
+          )}
+          <span className="hidden sm:inline">
+            {isSaving ? "saving..." : "save"}
+          </span>
+        </button>
 
         {/* Participants */}
         <div className="flex items-center gap-2 sm:gap-3">
