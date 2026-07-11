@@ -17,28 +17,77 @@ function DashboardNavbar() {
     });
   };
   return (
-    <nav className="flex justify-between border-b px-8 py-4 h-18">
-      <h1 className="text-2xl font-bold">Squiggle</h1>
-      <ul className="flex gap-3">
-        <li>
-          <button
-            className="px-6 py-3 bg-blue-800 text-white rounded-md"
-            onClick={() => setOpen(true)}
-          >
-            Join Room
-          </button>
-        </li>
-        <li>
-          <button
-            onClick={handleLogout}
-            className="px-6 py-3 bg-red-400 text-white rounded-md"
-          >
-            Logout
-          </button>
-        </li>
-      </ul>
+    <>
+      <nav
+        className="
+        flex
+        flex-wrap
+        items-center
+        justify-between
+        gap-3
+        border-b
+        px-4
+        sm:px-6
+        md:px-8
+        py-3
+        bg-white
+      "
+      >
+        {/* Logo */}
+        <h1 className="text-xl sm:text-2xl font-bold shrink-0">Squiggle</h1>
+
+        {/* Actions */}
+        <ul className="flex w-full sm:w-auto gap-2 sm:gap-3 sm:justify-end">
+          <li className="flex-1 sm:flex-none">
+            <button
+              onClick={() => setOpen(true)}
+              className="
+              w-full
+              sm:w-auto
+              rounded-md
+              bg-blue-800
+              px-4
+              sm:px-6
+              py-2
+              sm:py-3
+              text-sm
+              sm:text-base
+              text-white
+              hover:bg-blue-900
+              transition
+            "
+            >
+              Join Room
+            </button>
+          </li>
+
+          <li className="flex-1 sm:flex-none">
+            <button
+              onClick={handleLogout}
+              className="
+              w-full
+              sm:w-auto
+              rounded-md
+              bg-red-500
+              px-4
+              sm:px-6
+              py-2
+              sm:py-3
+              text-sm
+              sm:text-base
+              text-white
+              hover:bg-red-600
+              transition
+            "
+            >
+              Logout
+            </button>
+          </li>
+        </ul>
+      </nav>
+
       <JoinBoardModal open={open} onCloseModal={() => setOpen(false)} />
-    </nav>
+    </>
   );
 }
 

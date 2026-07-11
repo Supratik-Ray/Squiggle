@@ -416,12 +416,35 @@ function DrawingRoom() {
     return () => clearInterval(interval);
   }, [roomId, participants, socket]);
 
+  useEffect(() => {
+    const canvas = fabricRef.current;
+    const container = containerRef.current;
+
+    if (!canvas || !container) return;
+
+    const resize = () => {
+      canvas.setDimensions({
+        width: container.clientWidth,
+        height: container.clientHeight,
+      });
+
+      canvas.requestRenderAll();
+    };
+
+    resize();
+
+    const observer = new ResizeObserver(resize);
+    observer.observe(container);
+
+    return () => observer.disconnect();
+  }, []);
+
   return (
-    <div className="flex flex-col h-screen">
+    <div className="flex h-screen flex-col overflow-hidden">
       <RoomNavbar roomId={roomId as string} participants={participants} />
-      <div className="flex flex-1">
+      <div className="flex flex-1 overflow-hidden">
         <Toolbar fabricRef={fabricRef} selectedObjId={selectedObjId} />
-        <main ref={containerRef} className="flex-1 overflow-hidden">
+        <main ref={containerRef} className="relative flex-1 overflow-hidden">
           <canvas ref={canvasRef} />
         </main>
       </div>
