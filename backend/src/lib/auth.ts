@@ -13,9 +13,13 @@ export const auth = betterAuth({
   },
   secret: process.env.BETTER_AUTH_SECRET,
 
-  baseURL: `http://localhost:${process.env.PORT}`, //backend url
+  baseURL: `https://squiggle.onrender.com`, //backend url
 
-  trustedOrigins: ["http://localhost:5173", "http://localhost:5174"],
+  trustedOrigins: [
+    "http://localhost:5173",
+    "http://localhost:5174",
+    "https://squiggle-mauve.vercel.app",
+  ],
 
   socialProviders: {
     github: {
