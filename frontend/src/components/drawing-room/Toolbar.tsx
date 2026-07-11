@@ -5,7 +5,6 @@ import {
   Circle,
   Triangle,
   Type,
-  Image,
   Trash2,
   Palette,
   Shapes,
@@ -57,6 +56,28 @@ function Toolbar({
 
   const isErasing = activeTool === "erase";
   const isDrawing = activeTool === "draw";
+
+  const getRandomPosition = useCallback(
+    (canvas: Canvas, objectWidth: number, objectHeight: number) => {
+      const padding = 20;
+
+      const maxLeft = Math.max(
+        padding,
+        canvas.getWidth() - objectWidth - padding,
+      );
+
+      const maxTop = Math.max(
+        padding,
+        canvas.getHeight() - objectHeight - padding,
+      );
+
+      return {
+        left: Math.random() * (maxLeft - padding) + padding,
+        top: Math.random() * (maxTop - padding) + padding,
+      };
+    },
+    [],
+  );
 
   const handleErase = useCallback(
     (e: MouseEvent) => {
@@ -111,9 +132,14 @@ function Toolbar({
 
   const handleAddRectangle = () => {
     setActiveTool(null);
+
+    if (!fabricRef.current) return;
+
+    const { left, top } = getRandomPosition(fabricRef.current, 100, 100);
+
     const rect = new Rect({
-      left: 100,
-      top: 100,
+      left,
+      top,
       fill: hex,
       width: 100,
       height: 100,
@@ -123,9 +149,13 @@ function Toolbar({
 
   const handleAddCircle = () => {
     setActiveTool(null);
+
+    if (!fabricRef.current) return;
+
+    const { left, top } = getRandomPosition(fabricRef.current, 100, 100);
     const circle = new FabricCircle({
-      left: 100,
-      top: 100,
+      left,
+      top,
       fill: hex,
       radius: 50,
     });
@@ -134,9 +164,13 @@ function Toolbar({
 
   const handleAddTriangle = () => {
     setActiveTool(null);
+
+    if (!fabricRef.current) return;
+
+    const { left, top } = getRandomPosition(fabricRef.current, 100, 100);
     const triangle = new FabricTriangle({
-      left: 100,
-      top: 100,
+      left,
+      top,
       fill: hex,
       width: 100,
       height: 100,
@@ -146,9 +180,13 @@ function Toolbar({
 
   const handleAddTextBox = () => {
     setActiveTool(null);
+
+    if (!fabricRef.current) return;
+
+    const { left, top } = getRandomPosition(fabricRef.current, 100, 100);
     const text = new Textbox("Hello React", {
-      left: 100,
-      top: 100,
+      left,
+      top,
       fontSize: 30,
       fill: hex,
     });
@@ -223,10 +261,6 @@ function Toolbar({
         >
           <Type size={18} />
           Text
-        </button>
-        <button className="w-full flex items-center gap-3 rounded-lg border border-gray-200 px-3 py-2 hover:bg-gray-100 transition text-gray-700">
-          <Image size={18} />
-          Image
         </button>
       </div>
 
