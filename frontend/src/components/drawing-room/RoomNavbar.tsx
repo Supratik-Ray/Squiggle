@@ -1,6 +1,7 @@
 import toast from "react-hot-toast";
 import type { Participant } from "../../types/Participant";
 import { Save, LoaderCircle } from "lucide-react";
+import { Link } from "react-router-dom";
 
 function RoomNavbar({
   roomId,
@@ -32,9 +33,9 @@ function RoomNavbar({
     >
       {/* Logo */}
       <div className="shrink-0">
-        <h1 className="text-lg sm:text-xl font-bold tracking-tight">
+        <Link to="/" className="text-lg sm:text-xl font-bold tracking-tight">
           Squiggle
-        </h1>
+        </Link>
       </div>
 
       {/* Right Side */}

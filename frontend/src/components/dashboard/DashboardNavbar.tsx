@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { signOut } from "../../lib/auth-client";
 import JoinBoardModal from "./JoinBoardModal";
 import { useState } from "react";
@@ -34,7 +34,9 @@ function DashboardNavbar() {
       "
       >
         {/* Logo */}
-        <h1 className="text-xl sm:text-2xl font-bold shrink-0">Squiggle</h1>
+        <Link to="/" className="text-xl sm:text-2xl font-bold shrink-0">
+          Squiggle
+        </Link>
 
         {/* Actions */}
         <ul className="flex w-full sm:w-auto gap-2 sm:gap-3 sm:justify-end">
