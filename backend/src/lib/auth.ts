@@ -8,18 +8,28 @@ const db = client.db();
 
 export const auth = betterAuth({
   database: mongodbAdapter(db, { client }),
+
+  secret: process.env.BETTER_AUTH_SECRET,
+
+  baseURL: "https://squiggle.onrender.com",
+
+  trustedOrigins: [
+    "https://squiggle-mauve.vercel.app",
+    "http://localhost:5173",
+    "http://localhost:5174",
+  ],
+
+  advanced: {
+    defaultCookieAttributes: {
+      secure: true,
+      sameSite: "none",
+      httpOnly: true,
+    },
+  },
+
   emailAndPassword: {
     enabled: true,
   },
-  secret: process.env.BETTER_AUTH_SECRET,
-
-  baseURL: `https://squiggle.onrender.com`, //backend url
-
-  trustedOrigins: [
-    "http://localhost:5173",
-    "http://localhost:5174",
-    "https://squiggle-mauve.vercel.app",
-  ],
 
   socialProviders: {
     github: {
